@@ -1,0 +1,44 @@
+{
+  "name": "@untools/ts-graphql-api",
+  "version": "0.1.0",
+  "description": "CLI to create TypeScript Express MongoDB GraphQL API projects",
+  "main": "dist/index.js",
+  "bin": {
+    "@untools/ts-graphql-api": "./dist/bin/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "dev": "ts-node src/bin/index.ts"
+  },
+  "keywords": [
+    "typescript",
+    "express",
+    "mongodb",
+    "graphql",
+    "starter",
+    "api"
+  ],
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^13.1.0",
+    "degit": "^2.8.4",
+    "inquirer": "^12.5.2"
+  },
+  "devDependencies": {
+    "@types/chalk": "^0.4.31",
+    "@types/degit": "^2.8.6",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^22.14.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
