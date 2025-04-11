@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.5](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.4...v0.1.5) (2025-04-11)
+
+
+### Bug Fixes
+
+* modify regex to correctly replace env ([72e9f16](https://github.com/miracleonyenma/untools-ts-graphql-api/commit/72e9f1648272c25a27e7971c2f7c7b9cd7e44cdd))
+
 ### [0.1.4](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.3...v0.1.4) (2025-04-11)
 
 
