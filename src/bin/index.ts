@@ -117,10 +117,12 @@ async function main() {
           let envContent = fs.readFileSync(envPath, "utf8");
 
           // Replace values in the env file
-          envContent = envContent
-            .replace(/PORT=\d+/, `PORT=${appPort}`)
-            .replace(/APP_NAME=.*/, `APP_NAME=${appName}`)
-            .replace(/APP_URL=.*/, `APP_URL=http://localhost:${appPort}`);
+          envContent = envContent.replace(/PORT=\d+/, `PORT=${appPort}`);
+          envContent = envContent.replace(/APP_NAME=.*/, `APP_NAME=${appName}`);
+          envContent = envContent.replace(
+            /APP_URL=.*/,
+            `APP_URL=http://localhost:${appPort}`
+          );
 
           fs.writeFileSync(envTargetPath, envContent);
           console.log(
