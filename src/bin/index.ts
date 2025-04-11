@@ -123,7 +123,6 @@ async function main() {
             /APP_URL=.*/,
             `APP_URL=http://localhost:${appPort}`
           );
-
           fs.writeFileSync(envTargetPath, envContent);
           console.log(
             chalk.green("Created .env file with your configurations")
