@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.6](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.5...v0.1.6) (2025-04-11)
+
+
+### Code Refactoring
+
+* extract env variable replacement logic into helper function ([6f54346](https://github.com/miracleonyenma/untools-ts-graphql-api/commit/6f543461137b1cff8c48c870cb0f54e778ae0896))
+
 ### [0.1.5](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.4...v0.1.5) (2025-04-11)
 
 
