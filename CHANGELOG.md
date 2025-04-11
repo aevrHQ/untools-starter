@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.3](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.2...v0.1.3) (2025-04-11)
+
+
+### Continuous Integration
+
+* configure git and fetch-depth for semantic-release ([9ccc7be](https://github.com/miracleonyenma/untools-ts-graphql-api/commit/9ccc7be8a8279c4440059a8362a5803a0abfe2e0))
+
+
+### Build System
+
+* update tsconfig and package.json configurations ([04eb20f](https://github.com/miracleonyenma/untools-ts-graphql-api/commit/04eb20f35d1c15fca2e27c1ab4a4727d6ab1e5ad))
+
 ### [0.1.2](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.1...v0.1.2) (2025-04-11)
 
 
