@@ -4,7 +4,7 @@
   "description": "CLI to create TypeScript Express MongoDB GraphQL API projects",
   "main": "dist/index.js",
   "bin": {
-    "@untools/ts-graphql-api": "./dist/bin/index.js"
+    "@untools/ts-graphql-api": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -35,6 +35,14 @@
   "publishConfig": {
     "access": "public"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/miracleonyenma/untools-ts-graphql-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/miracleonyenma/untools-ts-graphql-api/issues"
+  },
+  "homepage": "https://github.com/miracleonyenma/untools-ts-graphql-api#readme",
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^13.1.0",
