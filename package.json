@@ -1,6 +1,6 @@
 {
   "name": "@untools/ts-graphql-api",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "CLI to create TypeScript Express MongoDB GraphQL API projects",
   "main": "dist/index.js",
   "bin": {

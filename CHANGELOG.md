@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.8](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.7...v0.1.8) (2025-04-13)
+
+
+### Features
+
+* add feature selection and auto-generated security to CLI ([30d24fa](https://github.com/miracleonyenma/untools-ts-graphql-api/commit/30d24fa6b998a3ae1e5563b407e6e8e99340d09f))
+
 ### [0.1.7](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.6...v0.1.7) (2025-04-13)
 
 
