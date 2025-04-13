@@ -23,6 +23,7 @@ The generated project includes:
 - **API Key Management**: Secure API key generation and validation
 - **Password Reset**: Secure password reset functionality
 - **Environment Configuration**: `.env` file support
+- **Smart Port Assignment**: Automatically generates a consistent, project-name-based port number using [`@untools/port-gen`](https://www.npmjs.com/package/@untools/port-gen)
 
 ## Installation
 
@@ -68,7 +69,7 @@ During the interactive setup, you can configure:
 
 The generated project follows this structure:
 
-```
+```bash
 my-api/
 ├── src/
 │   ├── config/                # Configuration files

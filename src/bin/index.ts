@@ -6,6 +6,7 @@ import chalk from "chalk";
 import degit from "degit";
 import path from "path";
 import fs from "fs";
+import { generatePortFromName } from "@untools/port-gen";
 
 type PackageJson = {
   name: string;
@@ -57,7 +58,7 @@ async function main() {
 
       // Additional configuration if not using default options
       let appName = projectDirectory;
-      let appPort = "4000";
+      let appPort = generatePortFromName(projectDirectory || "my-api");
       let includeDocker = true;
 
       if (!options?.yes) {
@@ -72,7 +73,7 @@ async function main() {
             type: "input",
             name: "appPort",
             message: "Which port should the server run on?",
-            default: "4000",
+            default: appPort.toString(),
             validate: (input) =>
               !isNaN(Number(input)) || "Port must be a number",
           },
@@ -127,7 +128,7 @@ async function main() {
           }
 
           // Use it for all your replacements
-          envContent = replaceEnvVar(envContent, "PORT", appPort);
+          envContent = replaceEnvVar(envContent, "PORT", appPort.toString());
           envContent = replaceEnvVar(envContent, "APP_NAME", appName);
           envContent = replaceEnvVar(
             envContent,
