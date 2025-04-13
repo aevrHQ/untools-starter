@@ -19,11 +19,14 @@ The generated project includes:
 - **MongoDB**: Database integration using Mongoose
 - **Authentication**: JWT-based authentication and Google OAuth
 - **Role Management**: Role-based access control for users
-- **Email Services**: Nodemailer integration for sending emails
+- **Email Services**: Nodemailer integration for sending emails (with optional Resend.com support)
 - **API Key Management**: Secure API key generation and validation
 - **Password Reset**: Secure password reset functionality
-- **Environment Configuration**: `.env` file support
+- **Environment Configuration**: `.env` file support with auto-generated secrets
 - **Smart Port Assignment**: Automatically generates a consistent, project-name-based port number using [`@untools/port-gen`](https://www.npmjs.com/package/@untools/port-gen)
+- **Web Push Notifications**: Optional VAPID key generation for web push support
+- **Payment Integration**: Optional support for payment gateway integration
+- **AI Integration**: Optional Google Gemini AI API integration
 
 ## Installation
 
@@ -61,9 +64,29 @@ This will create a new project with default settings.
 
 During the interactive setup, you can configure:
 
+### Basic Configuration
+
 - Project name
 - Application port
 - Whether to include Docker configuration
+
+### Feature Selection
+
+- MongoDB integration
+- Email service integration
+- Google OAuth integration
+- Payment gateway integration
+- Google Gemini AI integration
+- Web Push notifications support
+
+### Auto-generated Security
+
+The CLI automatically generates:
+
+- Secure random tokens for JWT authentication (ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET)
+- Webhook secret key (WEBHOOK_SECRET)
+- VAPID keys for Web Push notifications (if selected)
+- Default MongoDB URI based on project name
 
 ## Project Structure
 
@@ -81,9 +104,10 @@ my-api/
 │   ├── services/              # Business logic and service layer
 │   ├── utils/                 # Utility functions
 │   ├── index.ts               # Entry point
-├── .env                       # Environment variables
+├── .env                       # Environment variables (pre-configured based on selections)
 ├── tsconfig.json              # TypeScript configuration
 ├── package.json               # Project metadata and dependencies
+├── README.md                  # Custom project documentation
 └── [Docker files]             # Optional Docker configuration
 ```
 
