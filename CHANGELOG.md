@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.7](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.6...v0.1.7) (2025-04-13)
+
+
+### Features
+
+* add smart port assignment using @untools/port-gen ([99374f4](https://github.com/miracleonyenma/untools-ts-graphql-api/commit/99374f4f744f563eb335abb76ff3412f2a0cefcb))
+
 ### [0.1.6](https://github.com/miracleonyenma/untools-ts-graphql-api/compare/v0.1.5...v0.1.6) (2025-04-11)
 
 
