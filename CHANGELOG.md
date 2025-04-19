@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 0.2.1 (2025-04-19)
+
+
+### Features
+
+* add feature selection and auto-generated security to CLI ([30d24fa](https://github.com/miracleonyenma/untools-starter/commit/30d24fa6b998a3ae1e5563b407e6e8e99340d09f))
+* add smart port assignment using @untools/port-gen ([99374f4](https://github.com/miracleonyenma/untools-starter/commit/99374f4f744f563eb335abb76ff3412f2a0cefcb))
+* initialize project with essential configuration files ([bb0063f](https://github.com/miracleonyenma/untools-starter/commit/bb0063fa6c17bc11ea02912ec3552b487d476b7a))
+
+
+### Bug Fixes
+
+* modify regex to correctly replace env ([72e9f16](https://github.com/miracleonyenma/untools-starter/commit/72e9f1648272c25a27e7971c2f7c7b9cd7e44cdd))
+
+
+### Tests
+
+* add Jest configuration and initial test file ([fcb5b78](https://github.com/miracleonyenma/untools-starter/commit/fcb5b7835884f1f21d8497d386a28769994109d0))
+
+
+### Continuous Integration
+
+* configure git and fetch-depth for semantic-release ([9ccc7be](https://github.com/miracleonyenma/untools-starter/commit/9ccc7be8a8279c4440059a8362a5803a0abfe2e0))
+* update semantic release command in CI workflow ([9ad11a5](https://github.com/miracleonyenma/untools-starter/commit/9ad11a521b601994f30a01ff1ebccab0acffadc9))
+
+
+### Build System
+
+* update tsconfig and package.json configurations ([04eb20f](https://github.com/miracleonyenma/untools-starter/commit/04eb20f35d1c15fca2e27c1ab4a4727d6ab1e5ad))
+
+
+### Code Refactoring
+
+* extract env variable replacement logic into helper function ([6f54346](https://github.com/miracleonyenma/untools-starter/commit/6f543461137b1cff8c48c870cb0f54e778ae0896))
+* improve readability of env file replacement code ([7ac647b](https://github.com/miracleonyenma/untools-starter/commit/7ac647b263eba8de5e4e276d68e58be225c2cb05))
+* rename project from ts-graphql-api to starter ([9114533](https://github.com/miracleonyenma/untools-starter/commit/9114533f10fac0f059f02e83bf68c55935ce8c7b))
+
+
+### Chores
+
+* add project setup files and CI/CD configuration ([3227fd9](https://github.com/miracleonyenma/untools-starter/commit/3227fd9449a7b74258ed94e44e8f563ef75fe41b))
+* **release:** 0.1.1 ([cdcbd62](https://github.com/miracleonyenma/untools-starter/commit/cdcbd62bde1a0490c9cb4ada0e687e5172241842))
+* **release:** 0.1.2 ([c6734e5](https://github.com/miracleonyenma/untools-starter/commit/c6734e5f4a48696b8fd7d955303ad97319fd022b))
+* **release:** 0.1.3 ([ea127dd](https://github.com/miracleonyenma/untools-starter/commit/ea127ddfc955c65999db818541a5292f38c19927))
+* **release:** 0.1.4 ([866877a](https://github.com/miracleonyenma/untools-starter/commit/866877a362f81e337f9b0839bb9df4e9dfd9f967))
+* **release:** 0.1.5 ([b4faa63](https://github.com/miracleonyenma/untools-starter/commit/b4faa63f87eca9a36f48d6610eb05b1c57b16694))
+* **release:** 0.1.6 ([088d7d6](https://github.com/miracleonyenma/untools-starter/commit/088d7d6581aa14f4c486a227e5d8e0ba75e16966))
+* **release:** 0.1.7 ([1b0baea](https://github.com/miracleonyenma/untools-starter/commit/1b0baeaa7eb124bfe8f7832c740ef1f889d9881b))
+* **release:** 0.1.8 ([a68c05d](https://github.com/miracleonyenma/untools-starter/commit/a68c05dce8668a539cbf6ac0613d940d2c8dff21))
+* **release:** 0.2.0 ([42c1d67](https://github.com/miracleonyenma/untools-starter/commit/42c1d67ff0b253b1e3cb2aa3be37924acfeaa256))
+
 ### 0.2.0 (2025-04-19)
 
 ### Features
