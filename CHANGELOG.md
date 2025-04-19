@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.3](https://github.com/miracleonyenma/untools-starter/compare/v0.2.2...v0.2.3) (2025-04-19)
+
+
+### Documentation
+
+* enhance README with detailed project features and installation instructions ([2951a05](https://github.com/miracleonyenma/untools-starter/commit/2951a05f2f5c53681e059968e1c3f449562ee291))
+* update acknowledgements and project inspiration in README ([5eee613](https://github.com/miracleonyenma/untools-starter/commit/5eee613ac3c3cabdf9a44ce0c0decbecd3fe1fcf))
+
 ### [0.2.2](https://github.com/miracleonyenma/untools-starter/compare/v0.2.1...v0.2.2) (2025-04-19)
 
 ### 0.2.1 (2025-04-19)
