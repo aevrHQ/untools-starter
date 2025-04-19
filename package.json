@@ -1,15 +1,15 @@
 {
-  "name": "@untools/ts-graphql-api",
+  "name": "@untools/starter",
   "version": "0.1.8",
   "description": "CLI to create TypeScript Express MongoDB GraphQL API projects",
   "main": "dist/index.js",
   "bin": {
-    "@untools/ts-graphql-api": "./dist/index.js"
+    "@untools/starter": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "dev": "ts-node src/bin/index.ts",
+    "dev": "ts-node src/index.ts",
     "test": "jest",
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
@@ -22,7 +22,9 @@
     "mongodb",
     "graphql",
     "starter",
-    "api"
+    "api",
+    "nextjs",
+    "fullstack"
   ],
   "files": [
     "dist"
@@ -37,12 +39,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/miracleonyenma/untools-ts-graphql-api.git"
+    "url": "https://github.com/miracleonyenma/untools-starter.git"
   },
   "bugs": {
-    "url": "https://github.com/miracleonyenma/untools-ts-graphql-api/issues"
+    "url": "https://github.com/miracleonyenma/untools-starter/issues"
   },
-  "homepage": "https://github.com/miracleonyenma/untools-ts-graphql-api#readme",
+  "homepage": "https://github.com/miracleonyenma/untools-starter#readme",
   "dependencies": {
     "@untools/port-gen": "^0.0.2",
     "chalk": "^4.1.2",

@@ -1,8 +1,8 @@
-# @untools/ts-graphql-api
+# @untools/starter
 
 A CLI tool to scaffold a TypeScript Express MongoDB GraphQL API project quickly and efficiently.
 
-[![npm version](https://img.shields.io/npm/v/@untools/ts-graphql-api.svg)](https://www.npmjs.com/package/@untools/ts-graphql-api)
+[![npm version](https://img.shields.io/npm/v/@untools/starter.svg)](https://www.npmjs.com/package/@untools/starter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
@@ -32,10 +32,10 @@ The generated project includes:
 
 ```bash
 # Install globally
-npm install -g @untools/ts-graphql-api
+npm install -g @untools/starter
 
 # Or use with npx
-npx @untools/ts-graphql-api my-api
+npx @untools/starter starter
 ```
 
 ## Usage
@@ -43,15 +43,15 @@ npx @untools/ts-graphql-api my-api
 ### Interactive mode (default)
 
 ```bash
-@untools/ts-graphql-api my-api
+@untools/starter starter
 ```
 
-This will prompt you for configuration options and create a new project in the `my-api` directory.
+This will prompt you for configuration options and create a new project in the `starter` directory.
 
 ### Non-interactive mode
 
 ```bash
-@untools/ts-graphql-api my-api --yes
+@untools/starter starter --yes
 ```
 
 This will create a new project with default settings.
@@ -93,7 +93,7 @@ The CLI automatically generates:
 The generated project follows this structure:
 
 ```bash
-my-api/
+starter/
 ├── src/
 │   ├── config/                # Configuration files
 │   ├── graphql/               # GraphQL type definitions and resolvers
@@ -117,10 +117,10 @@ To contribute to this project:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ts-graphql-api.git
+git clone https://github.com/yourusername/starter.git
 
 # Install dependencies
-cd ts-graphql-api
+cd starter
 npm install
 
 # Run in development mode

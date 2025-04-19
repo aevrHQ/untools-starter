@@ -12,6 +12,6 @@
     { "type": "chore", "section": "Chores" },
     { "type": "revert", "section": "Reverts" }
   ],
-  "commitUrlFormat": "https://github.com/miracleonyenma/untools-ts-graphql-api/commit/{{hash}}",
-  "compareUrlFormat": "https://github.com/miracleonyenma/untools-ts-graphql-api/compare/{{previousTag}}...{{currentTag}}"
+  "commitUrlFormat": "https://github.com/miracleonyenma/untools-starter/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/miracleonyenma/untools-starter/compare/{{previousTag}}...{{currentTag}}"
 }
