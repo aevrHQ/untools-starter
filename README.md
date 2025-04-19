@@ -133,4 +133,10 @@ MIT © Miracle Onyenma
 
 ## Acknowledgements
 
-This project uses [miracleonyenma/express-ts-graphql-starter](https://github.com/miracleonyenma/express-ts-graphql-starter) as the template source.
+This project is inspired by the need for a quick and efficient way to scaffold TypeScript Express MongoDB GraphQL API projects. It aims to provide a solid foundation for developers to build upon, reducing the time spent on initial setup and configuration.
+This project uses:
+
+- [miracleonyenma/express-ts-graphql-starter](https://github.com/miracleonyenma/express-ts-graphql-starter) as the template source.
+- [miracleonyenma/untools-port-gen](https://github.com/miracleonyenma/untools-port-gen) as the port generator.
+- [degit](https://github.com/Rich-Harris/degit) for creating the project template.
+- [miracleonyenma/nextjs-starter-client](https://github.com/miracleonyenma/nextjs-starter-client) for the Next.js frontend.
