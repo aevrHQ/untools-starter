@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/miracleonyenma/untools-starter/compare/v0.2.3...v0.3.0) (2025-06-15)
+
+
+### Features
+
+* add MongoDB Docker option and enhance project setup ([89e9c52](https://github.com/miracleonyenma/untools-starter/commit/89e9c52bf609163b926b717c1696efc39c9b6563))
+
 ### [0.2.3](https://github.com/miracleonyenma/untools-starter/compare/v0.2.2...v0.2.3) (2025-04-19)
 
 
