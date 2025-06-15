@@ -358,11 +358,24 @@ async function createApiProject(
     console.log("\nNext steps:");
     console.log(chalk.cyan(`  cd ${projectDirectory}`));
 
-    if (projectOptions.includeDocker && projectOptions.includeMongoDocker) {
-      console.log(chalk.cyan("  docker-compose up -d"));
+    if (projectOptions.includeDocker) {
+      console.log("\nFor development (with hot reload):");
+      console.log(chalk.cyan("  docker-compose -f docker-compose.dev.yml up"));
       console.log(
-        chalk.yellow("  # This will start both the API and MongoDB containers")
+        chalk.yellow("  # This starts containers with live code reloading")
       );
+
+      console.log("\nFor production:");
+      console.log(
+        chalk.cyan("  docker-compose -f docker-compose.prod.yml up -d")
+      );
+      console.log(
+        chalk.yellow("  # This starts optimized production containers")
+      );
+
+      console.log("\nAlternatively, without Docker:");
+      console.log(chalk.cyan("  npm install"));
+      console.log(chalk.cyan("  npm run dev"));
     } else {
       console.log(chalk.cyan("  npm install"));
       console.log(chalk.cyan("  npm run dev"));
@@ -403,16 +416,60 @@ async function createApiProject(
 }
 
 async function createDockerCompose(targetDir: string, options: ProjectOptions) {
-  const dockerComposePath = path.join(targetDir, "docker-compose.yml");
+  await createDevDockerCompose(targetDir, options);
+  await createProdDockerCompose(targetDir, options);
+  await createDevDockerfile(targetDir, options);
 
-  let dockerComposeContent = `services:
+  // Create mongo initialization directory if MongoDB Docker is included
+  if (options.includeMongoDocker) {
+    const mongoInitDir = path.join(targetDir, "mongo-init");
+    if (!fs.existsSync(mongoInitDir)) {
+      fs.mkdirSync(mongoInitDir, { recursive: true });
+    }
+
+    // Create a sample initialization script
+    const initScript = `// MongoDB initialization script
+// This script runs when the MongoDB container starts for the first time
+
+// You can add any initialization logic here, such as:
+// - Creating initial collections
+// - Setting up indexes
+// - Creating default users
+// - Seeding initial data
+
+print('${options.appName} database initialized successfully');
+`;
+    fs.writeFileSync(path.join(mongoInitDir, "init.js"), initScript);
+  }
+
+  console.log(
+    chalk.green("Created Docker Compose configurations (dev & prod)")
+  );
+}
+
+async function createDevDockerCompose(
+  targetDir: string,
+  options: ProjectOptions
+) {
+  const dockerComposeDevPath = path.join(targetDir, "docker-compose.dev.yml");
+
+  let dockerComposeContent = `# Development Docker Compose - Hot reload enabled
+services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "${options.appPort}:${options.appPort}"
+    volumes:
+      - ./src:/usr/src/app/src:ro
+      - ./package.json:/usr/src/app/package.json:ro
+      - ./package-lock.json:/usr/src/app/package-lock.json:ro
+      - ./tsconfig.json:/usr/src/app/tsconfig.json:ro
+      - ./nodemon.json:/usr/src/app/nodemon.json:ro
+      - /usr/src/app/node_modules
     environment:
+      - NODE_ENV=development
       - PORT=\${PORT}
       - APP_NAME=\${APP_NAME}
       - APP_URL=\${APP_URL}
@@ -492,31 +549,133 @@ volumes:
   mongo_data:`;
   }
 
-  fs.writeFileSync(dockerComposePath, dockerComposeContent);
+  fs.writeFileSync(dockerComposeDevPath, dockerComposeContent);
+}
 
-  // Create mongo initialization directory if MongoDB Docker is included
-  if (options.includeMongoDocker) {
-    const mongoInitDir = path.join(targetDir, "mongo-init");
-    if (!fs.existsSync(mongoInitDir)) {
-      fs.mkdirSync(mongoInitDir, { recursive: true });
-    }
+async function createProdDockerCompose(
+  targetDir: string,
+  options: ProjectOptions
+) {
+  const dockerComposeProdPath = path.join(targetDir, "docker-compose.prod.yml");
 
-    // Create a sample initialization script
-    const initScript = `// MongoDB initialization script
-// This script runs when the MongoDB container starts for the first time
+  let dockerComposeContent = `# Production Docker Compose
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${options.appPort}:${options.appPort}"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=\${PORT}
+      - APP_NAME=\${APP_NAME}
+      - APP_URL=\${APP_URL}
+      - ACCESS_TOKEN_SECRET=\${ACCESS_TOKEN_SECRET}
+      - REFRESH_TOKEN_SECRET=\${REFRESH_TOKEN_SECRET}
+      - WEBHOOK_SECRET=\${WEBHOOK_SECRET}`;
 
-// You can add any initialization logic here, such as:
-// - Creating initial collections
-// - Setting up indexes
-// - Creating default users
-// - Seeding initial data
-
-print('${options.appName} database initialized successfully');
-`;
-    fs.writeFileSync(path.join(mongoInitDir, "init.js"), initScript);
+  // Add MongoDB environment variables if MongoDB is included
+  if (options.includeMongoDB) {
+    dockerComposeContent += `
+      - MONGO_URI=\${MONGO_URI}`;
   }
 
-  console.log(chalk.green("Created Docker Compose configuration"));
+  // Add other environment variables based on features
+  if (options.includeWebPush) {
+    dockerComposeContent += `
+      - VAPID_PUBLIC_KEY=\${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=\${VAPID_PRIVATE_KEY}`;
+  }
+
+  if (options.includeEmail) {
+    dockerComposeContent += `
+      - MAIL_HOST=\${MAIL_HOST}
+      - MAIL_PORT=\${MAIL_PORT}
+      - MAIL_USER=\${MAIL_USER}
+      - MAIL_PASS=\${MAIL_PASS}
+      - MAIL_LOGO=\${MAIL_LOGO}
+      - RESEND_API_KEY=\${RESEND_API_KEY}
+      - DEFAULT_MAIL_PROVIDER=\${DEFAULT_MAIL_PROVIDER}`;
+  }
+
+  if (options.includeOAuth) {
+    dockerComposeContent += `
+      - GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_OAUTH_REDIRECT_URI=\${GOOGLE_OAUTH_REDIRECT_URI}`;
+  }
+
+  if (options.includePayments) {
+    dockerComposeContent += `
+      - PAY_API_KEY=\${PAY_API_KEY}`;
+  }
+
+  if (options.includeGemini) {
+    dockerComposeContent += `
+      - GEMINI_API_KEY=\${GEMINI_API_KEY}`;
+  }
+
+  dockerComposeContent += `
+    env_file:
+      - .env`;
+
+  // Add depends_on if MongoDB Docker is included
+  if (options.includeMongoDocker) {
+    dockerComposeContent += `
+    depends_on:
+      - mongo`;
+  }
+
+  // Add MongoDB service if requested
+  if (options.includeMongoDocker) {
+    const dbName = options.appName.toLowerCase().replace(/\s+/g, "-");
+    dockerComposeContent += `
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=${dbName}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+
+volumes:
+  mongo_data:`;
+  }
+
+  fs.writeFileSync(dockerComposeProdPath, dockerComposeContent);
+}
+
+async function createDevDockerfile(targetDir: string, options: ProjectOptions) {
+  const dockerfileDevPath = path.join(targetDir, "Dockerfile.dev");
+
+  const dockerfileContent = `# Development Dockerfile with hot reload
+FROM node:lts
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE ${options.appPort}
+
+# Start with nodemon for hot reload
+CMD ["npm", "run", "dev"]`;
+
+  fs.writeFileSync(dockerfileDevPath, dockerfileContent);
 }
 
 async function createReadme(targetDir: string, options: ProjectOptions) {
@@ -528,23 +687,30 @@ GraphQL API built with TypeScript, Express, and MongoDB.
 
 ## Getting Started
 
-### With Docker (Recommended)
+### Development Mode (Hot Reload with Docker)
 
 1. Clone this repository
 2. Configure your environment variables in the \`.env\` file
-3. Start the services:
+3. Start the development services:
 \`\`\`bash
-docker-compose up -d
+docker-compose -f docker-compose.dev.yml up
 \`\`\`
 
-The API will be available at http://localhost:${options.appPort}
-${
-  options.includeMongoDocker
-    ? `MongoDB will be available at mongodb://localhost:27017\n`
-    : ""
-}
+This will start the containers with:
+- **Hot reload** - Code changes automatically restart the server
+- **Volume mounting** - Your source code is mounted into the container
+- **Development dependencies** - Nodemon and dev tools available
 
-### Without Docker
+### Production Mode (Docker)
+
+1. Build and start production services:
+\`\`\`bash
+docker-compose -f docker-compose.prod.yml up -d
+\`\`\`
+
+This uses the optimized production build with compiled TypeScript.
+
+### Local Development (Without Docker)
 
 1. Clone this repository
 2. Install dependencies:
@@ -630,6 +796,10 @@ ${
     options.includeMongoDocker
       ? "\n- Containerized MongoDB with data persistence"
       : ""
+  }${
+    options.includeDocker
+      ? "\n- **Hot reload in development** - Code changes automatically restart the server"
+      : ""
   }${options.includeWebPush ? "\n- Web Push notification support" : ""}${
     options.includeEmail ? "\n- Email service integration" : ""
   }${options.includeOAuth ? "\n- Google OAuth authentication" : ""}${
@@ -651,24 +821,45 @@ ${
 ## Development Commands
 
 \`\`\`bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+# Local development
+npm run dev          # Start with nodemon (hot reload)
+npm run build        # Build TypeScript
+npm start           # Start production build
 
 ${
   options.includeDocker
-    ? "# Docker commands\ndocker-compose up -d      # Start all services\ndocker-compose down       # Stop all services\ndocker-compose logs api   # View API logs\n" +
+    ? "# Docker development (with hot reload)\ndocker-compose -f docker-compose.dev.yml up\ndocker-compose -f docker-compose.dev.yml down\n\n# Docker production\ndocker-compose -f docker-compose.prod.yml up -d\ndocker-compose -f docker-compose.prod.yml down\n\n# View logs\ndocker-compose -f docker-compose.dev.yml logs -f api\n" +
       (options.includeMongoDocker
-        ? "docker-compose logs mongo # View MongoDB logs\n"
+        ? "docker-compose -f docker-compose.dev.yml logs -f mongo\n"
         : "")
     : ""
 }
 \`\`\`
+
+## Development Workflow
+
+${
+  options.includeDocker
+    ? "### With Docker (Recommended)\n\n1. Start development containers:\n   ```bash\n   docker-compose -f docker-compose.dev.yml up\n   ```\n\n2. Make changes to your code in the `src/` directory\n\n3. The server will automatically restart when you save changes\n\n4. View logs in real-time in your terminal\n\n5. Stop containers:\n   ```bash\n   docker-compose -f docker-compose.dev.yml down\n   ```\n\n### Without Docker\n\n"
+    : ""
+}1. Start the development server:
+   \`\`\`bash
+   npm run dev
+   \`\`\`
+
+2. Make changes to your code
+
+3. Nodemon will automatically restart the server
+
+4. Access your API at http://localhost:${options.appPort}
+
+## Production Deployment
+
+${
+  options.includeDocker
+    ? "Use the production Docker Compose configuration:\n\n```bash\n# Build and start production containers\ndocker-compose -f docker-compose.prod.yml up -d\n\n# Check status\ndocker-compose -f docker-compose.prod.yml ps\n\n# View logs\ndocker-compose -f docker-compose.prod.yml logs -f\n```\n\nThe production setup includes:\n- Compiled TypeScript (no source code in container)\n- Optimized Node.js image\n- Production environment variables\n- Automatic container restart on failure\n"
+    : "Build and deploy your application:\n\n```bash\nnpm run build\nnpm start\n```\n"
+}
 
 ## Generated with @untools/starter
 
