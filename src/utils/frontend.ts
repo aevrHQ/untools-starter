@@ -37,6 +37,7 @@ async function createFrontendProject(
     useCloudinary: true,
     googleOAuth: true,
     webPushNotifications: true,
+    includeMongoDocker: false,
   };
 
   if (!options?.yes) {

@@ -1,3 +1,5 @@
+// ./src/utils/api.ts
+
 import inquirer from "inquirer";
 import chalk from "chalk";
 import degit from "degit";
@@ -45,6 +47,7 @@ async function createApiProject(
     appPort: generatePortFromName(projectDirectory || "starter").toString(),
     includeDocker: true,
     includeMongoDB: true,
+    includeMongoDocker: false, // New option for MongoDB Docker container
     includeEmail: true,
     includeOAuth: true,
     includePayments: false,
@@ -96,6 +99,15 @@ async function createApiProject(
         name: "includeMongoDB",
         message: "Include MongoDB configuration?",
         default: true,
+      },
+      {
+        type: "confirm",
+        name: "includeMongoDocker",
+        message:
+          "Include MongoDB Docker container? (Recommended for development)",
+        default: projectOptions.includeDocker && projectOptions.includeMongoDB,
+        when: (answers) =>
+          answers.includeMongoDB && projectOptions.includeDocker,
       },
       {
         type: "confirm",
@@ -153,6 +165,11 @@ async function createApiProject(
     pkg.description = `API generated from @untools/starter`;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
+    // Create or modify docker-compose.yml if Docker is included
+    if (projectOptions.includeDocker) {
+      await createDockerCompose(targetDir, projectOptions);
+    }
+
     // Create or modify .env file
     const envPath = path.join(targetDir, ".env.example");
     const envTargetPath = path.join(targetDir, ".env");
@@ -164,11 +181,20 @@ async function createApiProject(
       const accessTokenSecret = generateSecureKey();
       const refreshTokenSecret = generateSecureKey();
       const webhookSecret = generateSecureKey();
-      const mongoUri = projectOptions.includeMongoDB
-        ? `mongodb://localhost:27017/${projectOptions.appName
+
+      // Set MongoDB URI based on Docker option
+      let mongoUri = "";
+      if (projectOptions.includeMongoDB) {
+        if (projectOptions.includeMongoDocker) {
+          mongoUri = `mongodb://mongo:27017/${projectOptions.appName
             .toLowerCase()
-            .replace(/\s+/g, "-")}`
-        : "";
+            .replace(/\s+/g, "-")}`;
+        } else {
+          mongoUri = `mongodb://localhost:27017/${projectOptions.appName
+            .toLowerCase()
+            .replace(/\s+/g, "-")}`;
+        }
+      }
 
       // Generate VAPID keys if web push is included
       let vapidPublicKey = "";
@@ -310,6 +336,7 @@ async function createApiProject(
     if (!projectOptions.includeDocker) {
       const dockerFiles = [
         path.join(targetDir, "Dockerfile"),
+        path.join(targetDir, "docker-compose.yml"),
         path.join(targetDir, "docker-compose.dev.yml"),
         path.join(targetDir, "docker-compose.prod.yml"),
       ];
@@ -323,116 +350,28 @@ async function createApiProject(
     }
 
     // Create a brief usage guide
-    const readmePath = path.join(targetDir, "README.md");
-    let readmeContent = "";
-
-    if (fs.existsSync(readmePath)) {
-      readmeContent = fs.readFileSync(readmePath, "utf8");
-    }
-
-    const setupGuide = `
-# ${projectOptions.appName}
-
-GraphQL API built with TypeScript, Express, and MongoDB.
-
-## Getting Started
-
-1. Clone this repository
-2. Install dependencies:
-\`\`\`bash
-npm install
-\`\`\`
-3. Configure your environment variables in the \`.env\` file
-
-4. Start the development server:
-\`\`\`bash
-npm run dev
-\`\`\`
-
-## Environment Variables
-
-The following environment variables have been pre-configured:
-
-- \`PORT\`: ${projectOptions.appPort} (Server port)
-- \`APP_NAME\`: ${projectOptions.appName}
-- \`APP_URL\`: http://localhost:${projectOptions.appPort}
-${
-  projectOptions.includeMongoDB
-    ? "- `MONGO_URI`: Local MongoDB connection\n"
-    : ""
-}
-${
-  projectOptions.includeWebPush
-    ? "- `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: Generated for Web Push notifications\n"
-    : ""
-}
-
-${
-  projectOptions.includeEmail
-    ? "### Email Configuration\nUpdate the following variables with your email service credentials:\n- `MAIL_HOST`\n- `MAIL_PORT`\n- `MAIL_USER`\n- `MAIL_PASS`\n- `MAIL_LOGO`\n- `RESEND_API_KEY` (if using Resend)\n- `DEFAULT_MAIL_PROVIDER`\n"
-    : ""
-}
-
-${
-  projectOptions.includeOAuth
-    ? "### Google OAuth\nUpdate the following variables with your Google OAuth credentials:\n- `GOOGLE_CLIENT_ID`\n- `GOOGLE_CLIENT_SECRET`\n- `GOOGLE_OAUTH_REDIRECT_URI`\n"
-    : ""
-}
-
-${
-  projectOptions.includePayments
-    ? "### Payments\nConfigure your payment gateway:\n- `PAY_API_KEY`\n"
-    : ""
-}
-
-${
-  projectOptions.includeGemini
-    ? "### Google Gemini AI\nAdd your Gemini API key:\n- `GEMINI_API_KEY`\n"
-    : ""
-}
-
-## Features
-
-- TypeScript Express API with GraphQL
-- MongoDB integration with Mongoose${
-      projectOptions.includeDocker
-        ? "\n- Docker configuration for development and production"
-        : ""
-    }${
-      projectOptions.includeWebPush ? "\n- Web Push notification support" : ""
-    }${projectOptions.includeEmail ? "\n- Email service integration" : ""}${
-      projectOptions.includeOAuth ? "\n- Google OAuth authentication" : ""
-    }${
-      projectOptions.includePayments ? "\n- Payment gateway integration" : ""
-    }${projectOptions.includeGemini ? "\n- Google Gemini AI integration" : ""}
-
-## GraphQL Playground
-
-Access the GraphQL playground at: http://localhost:${
-      projectOptions.appPort
-    }/graphql
-
-## Generated with @untools/starter
-
-This project was scaffolded using [@untools/starter](https://www.npmjs.com/package/@untools/starter).
-`;
-
-    fs.writeFileSync(readmePath, setupGuide);
-    console.log(
-      chalk.green("Created custom README.md with project information")
-    );
+    await createReadme(targetDir, projectOptions);
 
     console.log(
       chalk.green("\nSuccess! Your new API project has been created.")
     );
     console.log("\nNext steps:");
     console.log(chalk.cyan(`  cd ${projectDirectory}`));
-    console.log(chalk.cyan("  npm install"));
-    console.log(chalk.cyan("  npm run dev"));
+
+    if (projectOptions.includeDocker && projectOptions.includeMongoDocker) {
+      console.log(chalk.cyan("  docker-compose up -d"));
+      console.log(
+        chalk.yellow("  # This will start both the API and MongoDB containers")
+      );
+    } else {
+      console.log(chalk.cyan("  npm install"));
+      console.log(chalk.cyan("  npm run dev"));
+    }
+
     console.log("");
 
     // Show customized next steps based on enabled features
-    if (projectOptions.includeMongoDB) {
+    if (projectOptions.includeMongoDB && !projectOptions.includeMongoDocker) {
       console.log(
         chalk.yellow(
           "Make sure MongoDB is running locally or update the MONGO_URI in your .env file!"
@@ -446,6 +385,13 @@ This project was scaffolded using [@untools/starter](https://www.npmjs.com/packa
         )
       );
     }
+    if (projectOptions.includeMongoDocker) {
+      console.log(
+        chalk.green(
+          "MongoDB will be available at mongodb://localhost:27017 when running with Docker Compose"
+        )
+      );
+    }
   } catch (error) {
     console.log(
       chalk.red(
@@ -454,6 +400,283 @@ This project was scaffolded using [@untools/starter](https://www.npmjs.com/packa
     );
     process.exit(1);
   }
+}
+
+async function createDockerCompose(targetDir: string, options: ProjectOptions) {
+  const dockerComposePath = path.join(targetDir, "docker-compose.yml");
+
+  let dockerComposeContent = `services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${options.appPort}:${options.appPort}"
+    environment:
+      - PORT=\${PORT}
+      - APP_NAME=\${APP_NAME}
+      - APP_URL=\${APP_URL}
+      - ACCESS_TOKEN_SECRET=\${ACCESS_TOKEN_SECRET}
+      - REFRESH_TOKEN_SECRET=\${REFRESH_TOKEN_SECRET}
+      - WEBHOOK_SECRET=\${WEBHOOK_SECRET}`;
+
+  // Add MongoDB environment variables if MongoDB is included
+  if (options.includeMongoDB) {
+    dockerComposeContent += `
+      - MONGO_URI=\${MONGO_URI}`;
+  }
+
+  // Add other environment variables based on features
+  if (options.includeWebPush) {
+    dockerComposeContent += `
+      - VAPID_PUBLIC_KEY=\${VAPID_PUBLIC_KEY}
+      - VAPID_PRIVATE_KEY=\${VAPID_PRIVATE_KEY}`;
+  }
+
+  if (options.includeEmail) {
+    dockerComposeContent += `
+      - MAIL_HOST=\${MAIL_HOST}
+      - MAIL_PORT=\${MAIL_PORT}
+      - MAIL_USER=\${MAIL_USER}
+      - MAIL_PASS=\${MAIL_PASS}
+      - MAIL_LOGO=\${MAIL_LOGO}
+      - RESEND_API_KEY=\${RESEND_API_KEY}
+      - DEFAULT_MAIL_PROVIDER=\${DEFAULT_MAIL_PROVIDER}`;
+  }
+
+  if (options.includeOAuth) {
+    dockerComposeContent += `
+      - GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_OAUTH_REDIRECT_URI=\${GOOGLE_OAUTH_REDIRECT_URI}`;
+  }
+
+  if (options.includePayments) {
+    dockerComposeContent += `
+      - PAY_API_KEY=\${PAY_API_KEY}`;
+  }
+
+  if (options.includeGemini) {
+    dockerComposeContent += `
+      - GEMINI_API_KEY=\${GEMINI_API_KEY}`;
+  }
+
+  dockerComposeContent += `
+    env_file:
+      - .env`;
+
+  // Add depends_on if MongoDB Docker is included
+  if (options.includeMongoDocker) {
+    dockerComposeContent += `
+    depends_on:
+      - mongo`;
+  }
+
+  // Add MongoDB service if requested
+  if (options.includeMongoDocker) {
+    const dbName = options.appName.toLowerCase().replace(/\s+/g, "-");
+    dockerComposeContent += `
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=${dbName}
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+
+volumes:
+  mongo_data:`;
+  }
+
+  fs.writeFileSync(dockerComposePath, dockerComposeContent);
+
+  // Create mongo initialization directory if MongoDB Docker is included
+  if (options.includeMongoDocker) {
+    const mongoInitDir = path.join(targetDir, "mongo-init");
+    if (!fs.existsSync(mongoInitDir)) {
+      fs.mkdirSync(mongoInitDir, { recursive: true });
+    }
+
+    // Create a sample initialization script
+    const initScript = `// MongoDB initialization script
+// This script runs when the MongoDB container starts for the first time
+
+// You can add any initialization logic here, such as:
+// - Creating initial collections
+// - Setting up indexes
+// - Creating default users
+// - Seeding initial data
+
+print('${options.appName} database initialized successfully');
+`;
+    fs.writeFileSync(path.join(mongoInitDir, "init.js"), initScript);
+  }
+
+  console.log(chalk.green("Created Docker Compose configuration"));
+}
+
+async function createReadme(targetDir: string, options: ProjectOptions) {
+  const readmePath = path.join(targetDir, "README.md");
+
+  const setupGuide = `# ${options.appName}
+
+GraphQL API built with TypeScript, Express, and MongoDB.
+
+## Getting Started
+
+### With Docker (Recommended)
+
+1. Clone this repository
+2. Configure your environment variables in the \`.env\` file
+3. Start the services:
+\`\`\`bash
+docker-compose up -d
+\`\`\`
+
+The API will be available at http://localhost:${options.appPort}
+${
+  options.includeMongoDocker
+    ? `MongoDB will be available at mongodb://localhost:27017\n`
+    : ""
+}
+
+### Without Docker
+
+1. Clone this repository
+2. Install dependencies:
+\`\`\`bash
+npm install
+\`\`\`
+3. Configure your environment variables in the \`.env\` file
+${
+  !options.includeMongoDocker
+    ? "4. Make sure MongoDB is running locally\n5. Start the development server:"
+    : "4. Start the development server:"
+}
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## Environment Variables
+
+The following environment variables have been pre-configured:
+
+- \`PORT\`: ${options.appPort} (Server port)
+- \`APP_NAME\`: ${options.appName}
+- \`APP_URL\`: http://localhost:${options.appPort}
+${
+  options.includeMongoDB
+    ? `- \`MONGO_URI\`: ${
+        options.includeMongoDocker
+          ? "Docker MongoDB connection"
+          : "Local MongoDB connection"
+      }\n`
+    : ""
+}${
+    options.includeWebPush
+      ? "- `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: Generated for Web Push notifications\n"
+      : ""
+  }
+
+${
+  options.includeEmail
+    ? "### Email Configuration\nUpdate the following variables with your email service credentials:\n- `MAIL_HOST`\n- `MAIL_PORT`\n- `MAIL_USER`\n- `MAIL_PASS`\n- `MAIL_LOGO`\n- `RESEND_API_KEY` (if using Resend)\n- `DEFAULT_MAIL_PROVIDER`\n"
+    : ""
+}
+
+${
+  options.includeOAuth
+    ? "### Google OAuth\nUpdate the following variables with your Google OAuth credentials:\n- `GOOGLE_CLIENT_ID`\n- `GOOGLE_CLIENT_SECRET`\n- `GOOGLE_OAUTH_REDIRECT_URI`\n"
+    : ""
+}
+
+${
+  options.includePayments
+    ? "### Payments\nConfigure your payment gateway:\n- `PAY_API_KEY`\n"
+    : ""
+}
+
+${
+  options.includeGemini
+    ? "### Google Gemini AI\nAdd your Gemini API key:\n- `GEMINI_API_KEY`\n"
+    : ""
+}
+
+## Docker Services
+
+${
+  options.includeDocker
+    ? "- **API**: Express GraphQL server running on port " + options.appPort
+    : "Docker configuration not included"
+}
+${
+  options.includeMongoDocker
+    ? "- **MongoDB**: Database server running on port 27017 with persistent data storage"
+    : ""
+}
+
+## Features
+
+- TypeScript Express API with GraphQL
+- MongoDB integration with Mongoose${
+    options.includeDocker
+      ? "\n- Docker configuration for development and production"
+      : ""
+  }${
+    options.includeMongoDocker
+      ? "\n- Containerized MongoDB with data persistence"
+      : ""
+  }${options.includeWebPush ? "\n- Web Push notification support" : ""}${
+    options.includeEmail ? "\n- Email service integration" : ""
+  }${options.includeOAuth ? "\n- Google OAuth authentication" : ""}${
+    options.includePayments ? "\n- Payment gateway integration" : ""
+  }${options.includeGemini ? "\n- Google Gemini AI integration" : ""}
+
+## GraphQL Playground
+
+Access the GraphQL playground at: http://localhost:${options.appPort}/graphql
+
+${
+  options.includeMongoDocker
+    ? "## MongoDB Management\n\nYou can connect to the MongoDB container using any MongoDB client:\n- **Connection String**: `mongodb://localhost:27017`\n- **Database**: `" +
+      options.appName.toLowerCase().replace(/\s+/g, "-") +
+      '`\n\nTo access the MongoDB shell:\n```bash\ndocker exec -it $(docker ps -qf "name=mongo") mongosh\n```\n'
+    : ""
+}
+
+## Development Commands
+
+\`\`\`bash
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+${
+  options.includeDocker
+    ? "# Docker commands\ndocker-compose up -d      # Start all services\ndocker-compose down       # Stop all services\ndocker-compose logs api   # View API logs\n" +
+      (options.includeMongoDocker
+        ? "docker-compose logs mongo # View MongoDB logs\n"
+        : "")
+    : ""
+}
+\`\`\`
+
+## Generated with @untools/starter
+
+This project was scaffolded using [@untools/starter](https://www.npmjs.com/package/@untools/starter).
+`;
+
+  fs.writeFileSync(readmePath, setupGuide);
+  console.log(chalk.green("Created custom README.md with project information"));
 }
 
 export default createApiProject;

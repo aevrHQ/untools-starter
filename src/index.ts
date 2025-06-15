@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+//  ./src/index.ts
+
 import { program } from "commander";
 import inquirer from "inquirer";
 import chalk from "chalk";
