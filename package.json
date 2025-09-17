@@ -1,6 +1,6 @@
 {
   "name": "@untools/starter",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "CLI to create TypeScript Express MongoDB GraphQL API projects",
   "main": "dist/index.js",
   "bin": {
