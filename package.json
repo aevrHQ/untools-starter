@@ -39,12 +39,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/miracleonyenma/untools-starter.git"
+    "url": "https://github.com/aevrHQ/untools-starter.git"
   },
   "bugs": {
-    "url": "https://github.com/miracleonyenma/untools-starter/issues"
+    "url": "https://github.com/aevrHQ/untools-starter/issues"
   },
-  "homepage": "https://github.com/miracleonyenma/untools-starter#readme",
+  "homepage": "https://github.com/aevrHQ/untools-starter#readme",
   "dependencies": {
     "@untools/port-gen": "^0.0.2",
     "chalk": "^4.1.2",
