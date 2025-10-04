@@ -349,6 +349,12 @@ async function createApiProject(
       console.log(chalk.yellow("Removed Docker configuration files"));
     }
 
+    // Remove .kiro/ directory if it exists
+    if (fs.existsSync(path.join(targetDir, ".kiro"))) {
+      fs.rmdirSync(path.join(targetDir, ".kiro"), { recursive: true });
+      console.log(chalk.yellow("Removed .kiro directory"));
+    }
+
     // Create a brief usage guide
     await createReadme(targetDir, projectOptions);
 
