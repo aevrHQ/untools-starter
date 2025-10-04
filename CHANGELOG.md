@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.2](https://github.com/miracleonyenma/untools-starter/compare/v0.4.1...v0.4.2) (2025-10-04)
+
+
+### Bug Fixes
+
+* remove .kiro directory when creating api project ([8bc009e](https://github.com/miracleonyenma/untools-starter/commit/8bc009ef372c0b753faf7c9aa6b0150032c6b68d))
+
 ## [0.4.0](https://github.com/miracleonyenma/untools-starter/compare/v0.3.0...v0.4.0) (2025-06-15)
 
 
