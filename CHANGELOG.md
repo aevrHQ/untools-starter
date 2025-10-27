@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.4](https://github.com/miracleonyenma/untools-starter/compare/v0.4.2...v0.4.4) (2025-10-27)
+
+
+### Features
+
+* **project:** Support creating projects in current directory ([7bfe327](https://github.com/miracleonyenma/untools-starter/commit/7bfe327a54050b557248538610638da578cd91fa))
+
 ### [0.4.2](https://github.com/miracleonyenma/untools-starter/compare/v0.4.1...v0.4.2) (2025-10-04)
 
 
