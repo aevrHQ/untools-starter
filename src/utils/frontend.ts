@@ -12,7 +12,12 @@ async function createFrontendProject(
   options?: { yes?: boolean },
   baseOptions?: Partial<ProjectOptions>
 ) {
-  const targetDir = path.join(process.cwd(), projectDirectory);
+  const targetDir =
+    projectDirectory === "."
+      ? process.cwd()
+      : path.join(process.cwd(), projectDirectory);
+  const actualProjectName =
+    projectDirectory === "." ? path.basename(process.cwd()) : projectDirectory;
   console.log(chalk.blue(`Creating a new Next.js frontend in ${targetDir}...`));
 
   // Check directory existence
@@ -23,9 +28,10 @@ async function createFrontendProject(
 
   // Frontend-specific options
   let frontendOptions: FrontendOptions = {
-    appName: baseOptions?.appName || projectDirectory,
+    appName: baseOptions?.appName || actualProjectName,
     appPort:
-      baseOptions?.appPort || generatePortFromName(projectDirectory).toString(),
+      baseOptions?.appPort ||
+      generatePortFromName(actualProjectName).toString(),
     includeDocker: baseOptions?.includeDocker ?? true,
     includeMongoDB: baseOptions?.includeMongoDB ?? true,
     includeEmail: baseOptions?.includeEmail ?? true,
@@ -87,9 +93,9 @@ async function createFrontendProject(
     // Customize package.json
     const pkgPath = path.join(targetDir, "package.json");
     const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
-    pkg.name = projectDirectory;
+    pkg.name = actualProjectName;
     pkg.version = "0.1.0";
-    pkg.description = `Next.js frontend generated from @untools/ts-graphql-api`;
+    pkg.description = `Next.js frontend generated from @untools/starter`;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
     // Create or modify .env.local file
@@ -127,7 +133,7 @@ async function createFrontendProject(
     envContent = replaceEnvVar(
       envContent,
       "NEXT_PUBLIC_APP_NAME",
-      projectDirectory
+      actualProjectName
     );
 
     // API configuration
@@ -215,7 +221,9 @@ async function createFrontendProject(
       chalk.green("\nSuccess! Your new Next.js project has been created.")
     );
     console.log("\nNext steps:");
-    console.log(chalk.cyan(`  cd ${projectDirectory}`));
+    if (projectDirectory !== ".") {
+      console.log(chalk.cyan(`  cd ${projectDirectory}`));
+    }
     console.log(chalk.cyan("  npm install"));
     console.log(chalk.cyan("  npm run dev"));
 

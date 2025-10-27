@@ -21,15 +21,18 @@ async function createApiProject(
         type: "input",
         name: "projectDirectory",
         message: "What is the name of your project?",
-        default: "starter",
+        default: ".",
       },
     ]);
-    projectDirectory = answers.projectDirectory || "starter";
+    projectDirectory = answers.projectDirectory || ".";
   } else if (!projectDirectory) {
-    projectDirectory = "starter";
+    projectDirectory = ".";
   }
 
-  const targetDir = path.join(process.cwd(), projectDirectory || DEFAULT_NAME);
+  const targetDir =
+    projectDirectory === "."
+      ? process.cwd()
+      : path.join(process.cwd(), projectDirectory);
 
   console.log(
     chalk.blue(`Creating a new TypeScript GraphQL API in ${targetDir}...`)
@@ -41,10 +44,14 @@ async function createApiProject(
     process.exit(1);
   }
 
+  // Determine the actual project name
+  const actualProjectName =
+    projectDirectory === "." ? path.basename(process.cwd()) : projectDirectory;
+
   // Additional configuration if not using default options
   let projectOptions: ProjectOptions = {
-    appName: projectDirectory,
-    appPort: generatePortFromName(projectDirectory || "starter").toString(),
+    appName: actualProjectName,
+    appPort: generatePortFromName(actualProjectName).toString(),
     includeDocker: true,
     includeMongoDB: true,
     includeMongoDocker: false, // New option for MongoDB Docker container
@@ -72,7 +79,7 @@ async function createApiProject(
         type: "input",
         name: "appName",
         message: "What is your application name?",
-        default: projectDirectory,
+        default: actualProjectName,
       },
       {
         type: "input",
@@ -160,7 +167,7 @@ async function createApiProject(
     // Customize package.json
     const pkgPath = path.join(targetDir, "package.json");
     const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8")) as PackageJson;
-    pkg.name = projectDirectory || DEFAULT_NAME;
+    pkg.name = actualProjectName;
     pkg.version = "0.1.0";
     pkg.description = `API generated from @untools/starter`;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
@@ -351,7 +358,7 @@ async function createApiProject(
 
     // Remove .kiro/ directory if it exists
     if (fs.existsSync(path.join(targetDir, ".kiro"))) {
-      fs.rmdirSync(path.join(targetDir, ".kiro"), { recursive: true });
+      fs.rmSync(path.join(targetDir, ".kiro"), { recursive: true });
       console.log(chalk.yellow("Removed .kiro directory"));
     }
 
@@ -362,7 +369,9 @@ async function createApiProject(
       chalk.green("\nSuccess! Your new API project has been created.")
     );
     console.log("\nNext steps:");
-    console.log(chalk.cyan(`  cd ${projectDirectory}`));
+    if (projectDirectory !== ".") {
+      console.log(chalk.cyan(`  cd ${projectDirectory}`));
+    }
 
     if (projectOptions.includeDocker) {
       console.log("\nFor development (with hot reload):");

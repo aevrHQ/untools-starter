@@ -14,7 +14,7 @@ import createFullstackProject from "./utils/fullstack";
 
 const exec = promisify(child_process.exec);
 
-export const DEFAULT_NAME = "starter";
+export const DEFAULT_NAME = ".";
 
 // Generate a secure random key
 export function generateSecureKey(length = 64): string {

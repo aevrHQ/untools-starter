@@ -12,16 +12,25 @@ async function createFullstackProject(
   options?: { yes?: boolean },
   baseOptions?: Partial<ProjectOptions>
 ) {
-  const apiDir = `${projectDirectory}-api`;
-  const frontendDir = `${projectDirectory}-client`;
+  const actualProjectName =
+    projectDirectory === "." ? path.basename(process.cwd()) : projectDirectory;
+  const apiDir = `${actualProjectName}-api`;
+  const frontendDir = `${actualProjectName}-client`;
 
   console.log(
-    chalk.blue(`Creating a new full-stack project in ${projectDirectory}...`)
+    chalk.blue(
+      `Creating a new full-stack project in ${
+        projectDirectory === "." ? "current directory" : projectDirectory
+      }...`
+    )
   );
 
-  // Create a parent directory if it doesn't exist
-  const parentDir = path.join(process.cwd(), projectDirectory);
-  if (!fs.existsSync(parentDir)) {
+  // Create a parent directory if it doesn't exist (only if not current directory)
+  const parentDir =
+    projectDirectory === "."
+      ? process.cwd()
+      : path.join(process.cwd(), projectDirectory);
+  if (projectDirectory !== "." && !fs.existsSync(parentDir)) {
     fs.mkdirSync(parentDir, { recursive: true });
   }
 
@@ -42,7 +51,7 @@ async function createFullstackProject(
   // Create a root package.json with scripts to run both projects
   const rootPkgPath = path.join(parentDir, "package.json");
   const rootPkg = {
-    name: projectDirectory,
+    name: actualProjectName,
     version: "0.1.0",
     private: true,
     workspaces: [apiDir, frontendDir],
@@ -68,7 +77,7 @@ async function createFullstackProject(
   // Create a root README.md
   const readmePath = path.join(parentDir, "README.md");
   const readmeContent = `
-# ${projectDirectory}
+# ${actualProjectName}
 
 Full-stack application with TypeScript, GraphQL, Express, MongoDB, and Next.js.
 
@@ -103,21 +112,25 @@ Full-stack application with TypeScript, GraphQL, Express, MongoDB, and Next.js.
 - \`npm run start\`: Start both projects in production mode
 - \`npm run codegen\`: Generate GraphQL types for the frontend
 
-## Generated with @untools/ts-graphql-api
+## Generated with @untools/starter
 
-This project was scaffolded using [@untools/ts-graphql-api](https://www.npmjs.com/package/@untools/ts-graphql-api).
+This project was scaffolded using [@untools/starter](https://www.npmjs.com/package/@untools/starter).
 `;
 
   fs.writeFileSync(readmePath, readmeContent);
 
   console.log(
     chalk.green(
-      "\nSuccess! Your new full-stack project has been created in " +
-        projectDirectory
+      "\nSuccess! Your new full-stack project has been created" +
+        (projectDirectory === "."
+          ? " in the current directory"
+          : ` in ${projectDirectory}`)
     )
   );
   console.log("\nNext steps:");
-  console.log(chalk.cyan(`  cd ${projectDirectory}`));
+  if (projectDirectory !== ".") {
+    console.log(chalk.cyan(`  cd ${projectDirectory}`));
+  }
   console.log(chalk.cyan("  npm install"));
   console.log(chalk.cyan("  npm run dev"));
 }
