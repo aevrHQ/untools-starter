@@ -53,8 +53,8 @@ async function createApiProject(
     appName: actualProjectName,
     appPort: generatePortFromName(actualProjectName).toString(),
     includeDocker: true,
-    includeMongoDB: true,
-    includeMongoDocker: false, // New option for MongoDB Docker container
+    database: "mongodb",
+    includeDbDocker: false, // Docker container for the selected database
     includeEmail: true,
     includeOAuth: true,
     includePayments: false,
@@ -102,19 +102,25 @@ async function createApiProject(
     // Second set of feature selection questions
     const featureAnswers = await inquirer.prompt([
       {
-        type: "confirm",
-        name: "includeMongoDB",
-        message: "Include MongoDB configuration?",
-        default: true,
+        type: "list",
+        name: "database",
+        message: "Which database would you like to use?",
+        choices: [
+          { name: "MongoDB", value: "mongodb" },
+          { name: "PostgreSQL", value: "postgres" },
+        ],
+        default: "mongodb",
       },
       {
         type: "confirm",
-        name: "includeMongoDocker",
-        message:
-          "Include MongoDB Docker container? (Recommended for development)",
-        default: projectOptions.includeDocker && projectOptions.includeMongoDB,
-        when: (answers) =>
-          answers.includeMongoDB && projectOptions.includeDocker,
+        name: "includeDbDocker",
+        message: (answers) =>
+          `Include ${
+            answers.database === "mongodb" ? "MongoDB" : "PostgreSQL"
+          } Docker container? (Recommended for development)`,
+        default: (answers) =>
+          projectOptions.includeDocker && answers.database === "mongodb",
+        when: (answers) => projectOptions.includeDocker,
       },
       {
         type: "confirm",
@@ -156,7 +162,13 @@ async function createApiProject(
     console.log(chalk.yellow("Downloading starter template..."));
 
     // Use degit to clone the template
-    const emitter = degit("miracleonyenma/express-ts-graphql-starter", {
+    // Use degit to clone the template
+    const templateRepo =
+      projectOptions.database === "postgres"
+        ? "aevrHQ/express-ts-postgres-graphql-starter"
+        : "miracleonyenma/express-ts-graphql-starter";
+
+    const emitter = degit(templateRepo, {
       cache: false,
       force: true,
       verbose: false,
@@ -189,17 +201,26 @@ async function createApiProject(
       const refreshTokenSecret = generateSecureKey();
       const webhookSecret = generateSecureKey();
 
-      // Set MongoDB URI based on Docker option
-      let mongoUri = "";
-      if (projectOptions.includeMongoDB) {
-        if (projectOptions.includeMongoDocker) {
-          mongoUri = `mongodb://mongo:27017/${projectOptions.appName
+      // Set Database URI based on Docker option
+      let dbUri = "";
+      if (projectOptions.database === "mongodb") {
+        if (projectOptions.includeDbDocker) {
+          dbUri = `mongodb://mongo:27017/${projectOptions.appName
             .toLowerCase()
             .replace(/\s+/g, "-")}`;
         } else {
-          mongoUri = `mongodb://localhost:27017/${projectOptions.appName
+          dbUri = `mongodb://localhost:27017/${projectOptions.appName
             .toLowerCase()
             .replace(/\s+/g, "-")}`;
+        }
+      } else if (projectOptions.database === "postgres") {
+        const dbName = projectOptions.appName
+          .toLowerCase()
+          .replace(/\s+/g, "_");
+        if (projectOptions.includeDbDocker) {
+          dbUri = `postgresql://postgres:postgres@postgres:5432/${dbName}`;
+        } else {
+          dbUri = `postgresql://postgres:postgres@localhost:5432/${dbName}`;
         }
       }
 
@@ -254,9 +275,11 @@ async function createApiProject(
       );
       envContent = replaceEnvVar(envContent, "WEBHOOK_SECRET", webhookSecret);
 
-      // MongoDB
-      if (projectOptions.includeMongoDB) {
-        envContent = replaceEnvVar(envContent, "MONGO_URI", mongoUri);
+      // Database
+      if (projectOptions.database === "mongodb") {
+        envContent = replaceEnvVar(envContent, "MONGO_URI", dbUri);
+      } else if (projectOptions.database === "postgres") {
+        envContent = replaceEnvVar(envContent, "DATABASE_URL", dbUri);
       }
 
       // Web Push
@@ -399,10 +422,14 @@ async function createApiProject(
     console.log("");
 
     // Show customized next steps based on enabled features
-    if (projectOptions.includeMongoDB && !projectOptions.includeMongoDocker) {
+    if (!projectOptions.includeDbDocker) {
       console.log(
         chalk.yellow(
-          "Make sure MongoDB is running locally or update the MONGO_URI in your .env file!"
+          `Make sure ${
+            projectOptions.database === "mongodb" ? "MongoDB" : "PostgreSQL"
+          } is running locally or update the ${
+            projectOptions.database === "mongodb" ? "MONGO_URI" : "DATABASE_URL"
+          } in your .env file!`
         )
       );
     }
@@ -413,10 +440,16 @@ async function createApiProject(
         )
       );
     }
-    if (projectOptions.includeMongoDocker) {
+    if (projectOptions.includeDbDocker) {
       console.log(
         chalk.green(
-          "MongoDB will be available at mongodb://localhost:27017 when running with Docker Compose"
+          `${
+            projectOptions.database === "mongodb" ? "MongoDB" : "PostgreSQL"
+          } will be available at ${
+            projectOptions.database === "mongodb"
+              ? "mongodb://localhost:27017"
+              : "postgresql://localhost:5432"
+          } when running with Docker Compose`
         )
       );
     }
@@ -436,7 +469,7 @@ async function createDockerCompose(targetDir: string, options: ProjectOptions) {
   await createDevDockerfile(targetDir, options);
 
   // Create mongo initialization directory if MongoDB Docker is included
-  if (options.includeMongoDocker) {
+  if (options.includeDbDocker && options.database === "mongodb") {
     const mongoInitDir = path.join(targetDir, "mongo-init");
     if (!fs.existsSync(mongoInitDir)) {
       fs.mkdirSync(mongoInitDir, { recursive: true });
@@ -492,10 +525,13 @@ services:
       - REFRESH_TOKEN_SECRET=\${REFRESH_TOKEN_SECRET}
       - WEBHOOK_SECRET=\${WEBHOOK_SECRET}`;
 
-  // Add MongoDB environment variables if MongoDB is included
-  if (options.includeMongoDB) {
+  // Add Database environment variables
+  if (options.database === "mongodb") {
     dockerComposeContent += `
       - MONGO_URI=\${MONGO_URI}`;
+  } else if (options.database === "postgres") {
+    dockerComposeContent += `
+      - DATABASE_URL=\${DATABASE_URL}`;
   }
 
   // Add other environment variables based on features
@@ -537,18 +573,18 @@ services:
     env_file:
       - .env`;
 
-  // Add depends_on if MongoDB Docker is included
-  if (options.includeMongoDocker) {
+  // Add depends_on if Database Docker is included
+  if (options.includeDbDocker) {
     dockerComposeContent += `
     depends_on:
-      - mongo`;
+      - ${options.database === "mongodb" ? "mongo" : "postgres"}`;
   }
 
-  // Add MongoDB service if requested
-  if (options.includeMongoDocker) {
-    const dbName = options.appName.toLowerCase().replace(/\s+/g, "-");
-    dockerComposeContent += `
-
+  // Add Database service if requested
+  if (options.includeDbDocker) {
+    if (options.database === "mongodb") {
+      const dbName = options.appName.toLowerCase().replace(/\s+/g, "-");
+      dockerComposeContent += `
   mongo:
     image: mongo:7
     restart: unless-stopped
@@ -558,10 +594,29 @@ services:
       - MONGO_INITDB_DATABASE=${dbName}
     volumes:
       - mongo_data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d
+      - ./mongo-init:/docker-entrypoint-initdb.d`;
+    } else if (options.database === "postgres") {
+      const dbName = options.appName.toLowerCase().replace(/\s+/g, "_");
+      dockerComposeContent += `
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${dbName}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data`;
+    }
+  }
+
+  if (options.includeDbDocker) {
+    dockerComposeContent += `
 
 volumes:
-  mongo_data:`;
+  ${options.database === "mongodb" ? "mongo_data:" : "postgres_data:"}`;
   }
 
   fs.writeFileSync(dockerComposeDevPath, dockerComposeContent);
@@ -591,10 +646,13 @@ services:
       - REFRESH_TOKEN_SECRET=\${REFRESH_TOKEN_SECRET}
       - WEBHOOK_SECRET=\${WEBHOOK_SECRET}`;
 
-  // Add MongoDB environment variables if MongoDB is included
-  if (options.includeMongoDB) {
+  // Add Database environment variables
+  if (options.database === "mongodb") {
     dockerComposeContent += `
       - MONGO_URI=\${MONGO_URI}`;
+  } else if (options.database === "postgres") {
+    dockerComposeContent += `
+      - DATABASE_URL=\${DATABASE_URL}`;
   }
 
   // Add other environment variables based on features
@@ -636,18 +694,18 @@ services:
     env_file:
       - .env`;
 
-  // Add depends_on if MongoDB Docker is included
-  if (options.includeMongoDocker) {
+  // Add depends_on if Database Docker is included
+  if (options.includeDbDocker) {
     dockerComposeContent += `
     depends_on:
-      - mongo`;
+      - ${options.database === "mongodb" ? "mongo" : "postgres"}`;
   }
 
-  // Add MongoDB service if requested
-  if (options.includeMongoDocker) {
-    const dbName = options.appName.toLowerCase().replace(/\s+/g, "-");
-    dockerComposeContent += `
-
+  // Add Database service if requested
+  if (options.includeDbDocker) {
+    if (options.database === "mongodb") {
+      const dbName = options.appName.toLowerCase().replace(/\s+/g, "-");
+      dockerComposeContent += `
   mongo:
     image: mongo:7
     restart: unless-stopped
@@ -657,10 +715,29 @@ services:
       - MONGO_INITDB_DATABASE=${dbName}
     volumes:
       - mongo_data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d
+      - ./mongo-init:/docker-entrypoint-initdb.d`;
+    } else if (options.database === "postgres") {
+      const dbName = options.appName.toLowerCase().replace(/\s+/g, "_");
+      dockerComposeContent += `
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=${dbName}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data`;
+    }
+  }
+
+  if (options.includeDbDocker) {
+    dockerComposeContent += `
 
 volumes:
-  mongo_data:`;
+  ${options.database === "mongodb" ? "mongo_data:" : "postgres_data:"}`;
   }
 
   fs.writeFileSync(dockerComposeProdPath, dockerComposeContent);
@@ -696,9 +773,372 @@ CMD ["npm", "run", "dev"]`;
 async function createReadme(targetDir: string, options: ProjectOptions) {
   const readmePath = path.join(targetDir, "README.md");
 
-  const setupGuide = `# ${options.appName}
+  let setupGuide = "";
 
-GraphQL API built with TypeScript, Express, and MongoDB.
+  if (options.database === "postgres") {
+    setupGuide = `# ${options.appName}
+
+A starter project for setting up a TypeScript Express server with Apollo GraphQL.
+
+---
+
+## Features
+
+- **TypeScript**: Strongly typed language for writing scalable and maintainable code.
+- **Express**: Fast, unopinionated, minimalist web framework for Node.js.
+- **Apollo Server**: Spec-compliant and production-ready JavaScript GraphQL server.
+- **PostgreSQL**: Database integration using Prisma ORM.
+- **Authentication**: JWT-based authentication and Google OAuth.
+- **Role Management**: Role-based access control for users.
+- **Email Services**: Multi-provider email service with Nodemailer, ZeptoMail, and Resend support.
+- **API Key Management**: Secure API key generation and validation.
+- **Password Reset**: Secure password reset functionality.
+- **Environment Configuration**: \`.env\` file support for managing sensitive configurations.
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Node.js (v20 or later)
+- PostgreSQL (local or cloud instance, e.g., Supabase)
+- A \`.env\` file with the required environment variables (see below).
+
+### Steps
+
+1. Clone the repository (if you haven't already):
+
+   \`\`\`bash
+   git clone https://github.com/aevrHQ/express-ts-postgres-graphql-starter.git ${options.appName}
+   \`\`\`
+
+2. Navigate to the project directory:
+
+   \`\`\`bash
+   cd ${options.appName}
+   \`\`\`
+
+3. Install the dependencies:
+
+   \`\`\`bash
+   npm install
+   \`\`\`
+
+4. Set up environment variables:
+   Copy \`.env.example\` to \`.env\` and update the values.
+
+5. Run database migrations:
+
+   \`\`\`bash
+   npx prisma migrate dev
+   \`\`\`
+
+---
+
+## Project Structure
+
+\`\`\`
+${options.appName}/
+├── prisma/                # Prisma schema and migrations
+├── src/
+│   ├── config/                # Configuration files (e.g., database connection)
+│   ├── graphql/               # GraphQL type definitions and resolvers
+│   │   ├── typeDefs/          # GraphQL schema definitions
+│   │   ├── resolvers/         # GraphQL resolvers
+│   ├── middlewares/           # Express middlewares
+│   ├── services/              # Business logic and service layer
+│   ├── utils/                 # Utility functions (e.g., email, token generation)
+│   │   ├── emails/            # Email service with multiple providers
+│   ├── index.ts               # Entry point of the application
+├── .env                       # Environment variables
+├── tsconfig.json              # TypeScript configuration
+├── package.json               # Project metadata and dependencies
+├── Dockerfile                 # Docker configuration
+├── docker-compose.dev.yml     # Docker Compose for development
+├── docker-compose.prod.yml    # Docker Compose for production
+├── README.md                  # Project documentation
+\`\`\`
+
+---
+
+## Key Features and Modules
+
+### 1. **GraphQL API**
+
+- **Type Definitions**: Located in \`src/graphql/typeDefs/\`.
+- **Resolvers**: Located in \`src/graphql/resolvers/\`.
+
+#### Example Queries and Mutations
+
+- **User Queries**:
+
+  \`\`\`graphql
+  query {
+    users {
+      data {
+        id
+        firstName
+        lastName
+        email
+      }
+    }
+  }
+  \`\`\`
+
+- **User Mutations**:
+
+  \`\`\`graphql
+  mutation {
+    register(
+      input: {
+        firstName: "John"
+        lastName: "Doe"
+        email: "john.doe@example.com"
+        password: "password123"
+      }
+    ) {
+      user {
+        id
+        email
+      }
+    }
+  }
+  \`\`\`
+
+### 2. **Authentication**
+
+- **JWT Authentication**: Implemented in \`src/utils/token.ts\` and \`src/middlewares/auth.middleware.ts\`.
+- **Google OAuth**: Handled in \`src/services/google.auth.services.ts\`.
+
+### 3. **Role Management**
+
+- Roles are defined in \`prisma/schema.prisma\`.
+- Role setup is automated in \`src/services/role.services.ts\`.
+
+### 4. **Email Services**
+
+The email service module provides a flexible, provider-agnostic way to send emails with support for multiple email providers:
+
+- **Multiple Provider Support**:
+
+  - Nodemailer (Default) - Traditional SMTP-based email delivery
+  - ZeptoMail - Transactional email API
+  - Resend - Modern email API for developers
+
+- **Email Templates**: Pre-built responsive templates for common use cases like welcome emails and password reset
+
+- **Features**:
+  - Template-based emails
+  - Attachment support
+  - CC/BCC functionality
+  - Reply-to settings
+  - Type-safe interfaces
+  - Error handling
+  - Social media links
+  - Button actions
+
+#### Basic Usage
+
+\`\`\`typescript
+import { EmailService } from "./src/utils/emails";
+
+// Create email service with preferred provider
+const emailService = new EmailService("resend"); // or 'nodemailer' or 'zeptomail'
+
+// Send a simple email
+await emailService.sendEmail({
+  subject: "Welcome to our service",
+  htmlBody: "<h1>Hello there!</h1><p>Welcome to our platform.</p>",
+  to: {
+    email: "user@example.com",
+    name: "John Doe",
+  },
+});
+\`\`\`
+
+#### Using Templates
+
+\`\`\`typescript
+import { EmailService } from "./src/utils/emails";
+
+const emailService = new EmailService();
+
+// Generate standard template
+const template = emailService.generateStandardTemplate({
+  title: "Welcome to Our Platform",
+  content:
+    "<p>Thank you for signing up! We hope you enjoy using our service.</p>",
+  buttonText: "Get Started",
+  buttonUrl: "https://example.com/dashboard",
+  socialLinks: [
+    { name: "Twitter", url: "https://twitter.com/example" },
+    { name: "Instagram", url: "https://instagram.com/example" },
+  ],
+});
+
+// Send email with template
+await emailService.sendEmail({
+  subject: "Welcome to Our Platform",
+  htmlBody: template,
+  to: {
+    email: "user@example.com",
+    name: "John Doe",
+  },
+});
+\`\`\`
+
+#### Pre-made Email Templates
+
+\`\`\`typescript
+import { EmailService } from "./src/utils/emails";
+
+const emailService = new EmailService();
+
+// Send welcome email
+const welcomeTemplate = emailService.generateWelcomeEmail({
+  userName: "John",
+  verificationUrl: "https://example.com/verify?token=abc123",
+  additionalContent: "<p>Here are some tips to get started...</p>",
+});
+
+// Send password reset email
+const resetTemplate = emailService.generatePasswordResetEmail({
+  userName: "Jane",
+  resetUrl: "https://example.com/reset?token=xyz789",
+  expiryTime: "24 hours",
+});
+\`\`\`
+
+#### Legacy Support
+
+\`\`\`typescript
+import { mailSender, generateEmailTemplate } from "./src/utils/emails";
+
+// Your existing code will continue to work
+const emailBody = generateEmailTemplate(
+  "Welcome",
+  "<p>Thank you for signing up!</p>"
+);
+
+await mailSender("user@example.com", "Welcome", emailBody);
+\`\`\`
+
+### 5. **API Key Management**
+
+- API keys are generated and validated in \`src/services/apiKey.services.ts\` and \`src/middlewares/apiKey.middleware.ts\`.
+
+### 6. **Password Reset**
+
+- Password reset functionality is implemented in \`src/services/passwordResetToken.services.ts\`.
+
+---
+
+## Environment Variables
+
+| Variable                    | Description                                                            |
+| --------------------------- | ---------------------------------------------------------------------- |
+| \`PORT\`                      | Port on which the server runs                                          |
+| \`DATABASE_URL\`              | PostgreSQL connection string (pooling)                                 |
+| \`DIRECT_URL\`                | PostgreSQL connection string (direct)                                  |
+| \`JWT_SECRET\`                | Secret for signing JWT tokens                                          |
+| \`ACCESS_TOKEN_SECRET\`       | Secret for access tokens                                               |
+| \`REFRESH_TOKEN_SECRET\`      | Secret for refresh tokens                                              |
+| \`MAIL_USER\`                 | Email address for sending emails                                       |
+| \`MAIL_PASS\`                 | Password for the email account                                         |
+| \`MAIL_LOGO\`                 | URL of the logo used in email templates                                |
+| \`APP_NAME\`                  | Name of the application                                                |
+| \`APP_URL\`                   | Base URL of the application                                            |
+| \`GOOGLE_CLIENT_ID\`          | Google OAuth client ID                                                 |
+| \`GOOGLE_CLIENT_SECRET\`      | Google OAuth client secret                                             |
+| \`GOOGLE_OAUTH_REDIRECT_URI\` | Redirect URI for Google OAuth                                          |
+| \`ZOHO_KEY\`                  | ZeptoMail API key for email service                                    |
+| \`RESEND_API_KEY\`            | Resend API key for email service                                       |
+| \`DEFAULT_MAIL_PROVIDER\`     | Default email provider to use ('nodemailer', 'zeptomail', or 'resend') |
+
+---
+
+## Scripts
+
+- \`npm run dev\`: Run the development server with nodemon.
+- \`npm run build\`: Build the project.
+- \`npm start\`: Start the built project.
+
+---
+
+## Docker Support
+
+### Development
+
+To run the application in a Docker container for development:
+
+\`\`\`bash
+docker-compose -f docker-compose.dev.yml up --build
+\`\`\`
+
+### Production
+
+To run the application in a Docker container for production:
+
+\`\`\`bash
+docker-compose -f docker-compose.prod.yml up --build
+\`\`\`
+
+---
+
+## Testing
+
+Currently, no tests are implemented. You can add tests using a framework like **Jest** or **Mocha**.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Error**:
+
+   - Ensure PostgreSQL is running and the \`DATABASE_URL\` is correct.
+   - If using Supabase, ensure you have both \`DATABASE_URL\` (pooling) and \`DIRECT_URL\` (direct) configured.
+
+2. **Environment Variables Missing**:
+
+   - Ensure you have a \`.env\` file with all required variables.
+
+3. **Email Sending Issues**:
+   - Verify your email credentials and ensure less secure app access is enabled for your email account.
+   - For Gmail, you may need to generate an "App Password" if 2FA is enabled.
+   - Check that the correct email provider is configured (DEFAULT_MAIL_PROVIDER).
+
+---
+
+## Future Improvements
+
+- Add unit and integration tests.
+- Implement rate limiting for API endpoints.
+- Add support for more OAuth providers.
+- Improve error handling and logging.
+- Add more email templates for different scenarios.
+- Support for AWS SES as an additional email provider.
+`;
+  } else {
+    setupGuide = `# ${options.appName}
+
+GraphQL API built with TypeScript, Express, and ${
+      options.database === "mongodb" ? "MongoDB" : "PostgreSQL"
+    }.
 
 ## Getting Started
 
@@ -734,8 +1174,10 @@ npm install
 \`\`\`
 3. Configure your environment variables in the \`.env\` file
 ${
-  !options.includeMongoDocker
-    ? "4. Make sure MongoDB is running locally\n5. Start the development server:"
+  !options.includeDbDocker
+    ? `4. Make sure ${
+        options.database === "mongodb" ? "MongoDB" : "PostgreSQL"
+      } is running locally\n5. Start the development server:`
     : "4. Start the development server:"
 }
 \`\`\`bash
@@ -750,18 +1192,22 @@ The following environment variables have been pre-configured:
 - \`APP_NAME\`: ${options.appName}
 - \`APP_URL\`: http://localhost:${options.appPort}
 ${
-  options.includeMongoDB
+  options.database === "mongodb"
     ? `- \`MONGO_URI\`: ${
-        options.includeMongoDocker
+        options.includeDbDocker
           ? "Docker MongoDB connection"
           : "Local MongoDB connection"
       }\n`
-    : ""
+    : `- \`DATABASE_URL\`: ${
+        options.includeDbDocker
+          ? "Docker PostgreSQL connection"
+          : "Local PostgreSQL connection"
+      }\n`
 }${
-    options.includeWebPush
-      ? "- `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: Generated for Web Push notifications\n"
-      : ""
-  }
+      options.includeWebPush
+        ? "- `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: Generated for Web Push notifications\n"
+        : ""
+    }
 
 ${
   options.includeEmail
@@ -795,41 +1241,53 @@ ${
     : "Docker configuration not included"
 }
 ${
-  options.includeMongoDocker
-    ? "- **MongoDB**: Database server running on port 27017 with persistent data storage"
+  options.includeDbDocker
+    ? options.database === "mongodb"
+      ? "- **MongoDB**: Database server running on port 27017 with persistent data storage"
+      : "- **PostgreSQL**: Database server running on port 5432 with persistent data storage"
     : ""
 }
 
 ## Features
 
 - TypeScript Express API with GraphQL
-- MongoDB integration with Mongoose${
-    options.includeDocker
-      ? "\n- Docker configuration for development and production"
-      : ""
-  }${
-    options.includeMongoDocker
-      ? "\n- Containerized MongoDB with data persistence"
-      : ""
-  }${
-    options.includeDocker
-      ? "\n- **Hot reload in development** - Code changes automatically restart the server"
-      : ""
-  }${options.includeWebPush ? "\n- Web Push notification support" : ""}${
-    options.includeEmail ? "\n- Email service integration" : ""
-  }${options.includeOAuth ? "\n- Google OAuth authentication" : ""}${
-    options.includePayments ? "\n- Payment gateway integration" : ""
-  }${options.includeGemini ? "\n- Google Gemini AI integration" : ""}
+- ${
+      options.database === "mongodb"
+        ? "MongoDB integration with Mongoose"
+        : "PostgreSQL integration with Prisma"
+    }${
+      options.includeDocker
+        ? "\n- Docker configuration for development and production"
+        : ""
+    }${
+      options.includeDbDocker
+        ? `\n- Containerized ${
+            options.database === "mongodb" ? "MongoDB" : "PostgreSQL"
+          } with data persistence`
+        : ""
+    }${
+      options.includeDocker
+        ? "\n- **Hot reload in development** - Code changes automatically restart the server"
+        : ""
+    }${options.includeWebPush ? "\n- Web Push notification support" : ""}${
+      options.includeEmail ? "\n- Email service integration" : ""
+    }${options.includeOAuth ? "\n- Google OAuth authentication" : ""}${
+      options.includePayments ? "\n- Payment gateway integration" : ""
+    }${options.includeGemini ? "\n- Google Gemini AI integration" : ""}
 
 ## GraphQL Playground
 
 Access the GraphQL playground at: http://localhost:${options.appPort}/graphql
 
 ${
-  options.includeMongoDocker
-    ? "## MongoDB Management\n\nYou can connect to the MongoDB container using any MongoDB client:\n- **Connection String**: `mongodb://localhost:27017`\n- **Database**: `" +
-      options.appName.toLowerCase().replace(/\s+/g, "-") +
-      '`\n\nTo access the MongoDB shell:\n```bash\ndocker exec -it $(docker ps -qf "name=mongo") mongosh\n```\n'
+  options.includeDbDocker
+    ? options.database === "mongodb"
+      ? "## MongoDB Management\n\nYou can connect to the MongoDB container using any MongoDB client:\n- **Connection String**: `mongodb://localhost:27017`\n- **Database**: `" +
+        options.appName.toLowerCase().replace(/\s+/g, "-") +
+        '`\n\nTo access the MongoDB shell:\n```bash\ndocker exec -it $(docker ps -qf "name=mongo") mongosh\n```\n'
+      : "## PostgreSQL Management\n\nYou can connect to the PostgreSQL container using any PostgreSQL client:\n- **Connection String**: `postgresql://postgres:postgres@localhost:5432/" +
+        options.appName.toLowerCase().replace(/\s+/g, "_") +
+        '`\n\nTo access the PostgreSQL shell:\n```bash\ndocker exec -it $(docker ps -qf "name=postgres") psql -U postgres\n```\n'
     : ""
 }
 
@@ -844,8 +1302,10 @@ npm start           # Start production build
 ${
   options.includeDocker
     ? "# Docker development (with hot reload)\ndocker-compose -f docker-compose.dev.yml up\ndocker-compose -f docker-compose.dev.yml down\n\n# Docker production\ndocker-compose -f docker-compose.prod.yml up -d\ndocker-compose -f docker-compose.prod.yml down\n\n# View logs\ndocker-compose -f docker-compose.dev.yml logs -f api\n" +
-      (options.includeMongoDocker
-        ? "docker-compose -f docker-compose.dev.yml logs -f mongo\n"
+      (options.includeDbDocker
+        ? options.database === "mongodb"
+          ? "docker-compose -f docker-compose.dev.yml logs -f mongo\n"
+          : "docker-compose -f docker-compose.dev.yml logs -f postgres\n"
         : "")
     : ""
 }
@@ -880,6 +1340,7 @@ ${
 
 This project was scaffolded using [@untools/starter](https://www.npmjs.com/package/@untools/starter).
 `;
+  }
 
   fs.writeFileSync(readmePath, setupGuide);
   console.log(chalk.green("Created custom README.md with project information"));

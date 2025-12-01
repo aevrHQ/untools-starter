@@ -33,7 +33,8 @@ async function createFrontendProject(
       baseOptions?.appPort ||
       generatePortFromName(actualProjectName).toString(),
     includeDocker: baseOptions?.includeDocker ?? true,
-    includeMongoDB: baseOptions?.includeMongoDB ?? true,
+    database: baseOptions?.database ?? "mongodb",
+    includeDbDocker: baseOptions?.includeDbDocker ?? false,
     includeEmail: baseOptions?.includeEmail ?? true,
     includeOAuth: baseOptions?.includeOAuth ?? true,
     includePayments: baseOptions?.includePayments ?? false,
@@ -43,7 +44,6 @@ async function createFrontendProject(
     useCloudinary: true,
     googleOAuth: true,
     webPushNotifications: true,
-    includeMongoDocker: false,
   };
 
   if (!options?.yes) {

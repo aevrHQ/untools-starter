@@ -67,7 +67,10 @@ async function main() {
               name: "projectType",
               message: "What type of project do you want to create?",
               choices: [
-                { name: "API (Express, GraphQL, MongoDB)", value: "api" },
+                {
+                  name: "API (Express, GraphQL, MongoDB/PostgreSQL)",
+                  value: "api",
+                },
                 { name: "Frontend (Next.js)", value: "frontend" },
                 { name: "Fullstack (API + Frontend)", value: "fullstack" },
               ],

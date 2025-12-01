@@ -13,8 +13,8 @@ interface ProjectOptions {
   appName: string;
   appPort: string;
   includeDocker: boolean;
-  includeMongoDB: boolean;
-  includeMongoDocker: boolean; // New option for MongoDB Docker container
+  database: "mongodb" | "postgres";
+  includeDbDocker: boolean; // Docker container for the selected database
   includeEmail: boolean;
   includeOAuth: boolean;
   includePayments: boolean;
