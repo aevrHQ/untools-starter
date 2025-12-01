@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.5.0](https://github.com/miracleonyenma/untools-starter/compare/v0.4.4...v0.5.0) (2025-12-01)
+
+
+### Features
+
+* Introduce database selection (MongoDB or PostgreSQL) with optional Docker support, replacing specific MongoDB options. ([b3607e9](https://github.com/miracleonyenma/untools-starter/commit/b3607e988528dcea52e00446eba3f3bd7a0a7b0f))
+
 ### [0.4.4](https://github.com/miracleonyenma/untools-starter/compare/v0.4.2...v0.4.4) (2025-10-27)
 
 
