@@ -40,6 +40,7 @@ async function createFrontendProject(
     includePayments: baseOptions?.includePayments ?? false,
     includeGemini: baseOptions?.includeGemini ?? false,
     includeWebPush: baseOptions?.includeWebPush ?? true,
+    includeStorage: false,
     apiUrl: "http://localhost:5416",
     useCloudinary: true,
     googleOAuth: true,

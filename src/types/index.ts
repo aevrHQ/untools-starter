@@ -20,6 +20,8 @@ interface ProjectOptions {
   includePayments: boolean;
   includeGemini: boolean;
   includeWebPush: boolean;
+  includeStorage: boolean;
+  storageProvider?: "aws" | "cloudinary";
 }
 
 type FrontendOptions = ProjectOptions & {

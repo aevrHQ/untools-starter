@@ -60,6 +60,7 @@ async function createApiProject(
     includePayments: false,
     includeGemini: false,
     includeWebPush: true,
+    includeStorage: false,
   };
 
   // Merge in any base options provided
@@ -145,6 +146,23 @@ async function createApiProject(
         name: "includeGemini",
         message: "Include Google Gemini AI API configuration?",
         default: false,
+      },
+      {
+        type: "confirm",
+        name: "includeStorage",
+        message: "Include file storage configuration?",
+        default: false,
+      },
+      {
+        type: "list",
+        name: "storageProvider",
+        message: "Which storage provider would you like to use?",
+        choices: [
+          { name: "AWS S3", value: "aws" },
+          { name: "Cloudinary", value: "cloudinary" },
+        ],
+        default: "aws",
+        when: (answers) => answers.includeStorage,
       },
       {
         type: "confirm",
@@ -358,6 +376,82 @@ async function createApiProject(
         );
       }
 
+      // Storage
+      if (projectOptions.includeStorage) {
+        if (projectOptions.storageProvider === "aws") {
+          envContent = replaceEnvVar(
+            envContent,
+            "AWS_ACCESS_KEY_ID",
+            "your-aws-access-key-id"
+          );
+          envContent = replaceEnvVar(
+            envContent,
+            "AWS_SECRET_ACCESS_KEY",
+            "your-aws-secret-access-key"
+          );
+          envContent = replaceEnvVar(envContent, "AWS_REGION", "us-east-1");
+          envContent = replaceEnvVar(
+            envContent,
+            "AWS_BUCKET_NAME",
+            "your-bucket-name"
+          );
+        } else if (projectOptions.storageProvider === "cloudinary") {
+          envContent = replaceEnvVar(
+            envContent,
+            "CLOUDINARY_CLOUD_NAME",
+            "your-cloud-name"
+          );
+          envContent = replaceEnvVar(
+            envContent,
+            "CLOUDINARY_API_KEY",
+            "your-api-key"
+          );
+          envContent = replaceEnvVar(
+            envContent,
+            "CLOUDINARY_API_SECRET",
+            "your-api-secret"
+          );
+        }
+      }
+
+      // Storage
+      if (projectOptions.includeStorage) {
+        if (projectOptions.storageProvider === "aws") {
+          envContent = replaceEnvVar(
+            envContent,
+            "AWS_ACCESS_KEY_ID",
+            "your-aws-access-key-id"
+          );
+          envContent = replaceEnvVar(
+            envContent,
+            "AWS_SECRET_ACCESS_KEY",
+            "your-aws-secret-access-key"
+          );
+          envContent = replaceEnvVar(envContent, "AWS_REGION", "us-east-1");
+          envContent = replaceEnvVar(
+            envContent,
+            "AWS_BUCKET_NAME",
+            "your-bucket-name"
+          );
+        } else if (projectOptions.storageProvider === "cloudinary") {
+          envContent = replaceEnvVar(
+            envContent,
+            "CLOUDINARY_CLOUD_NAME",
+            "your-cloud-name"
+          );
+          envContent = replaceEnvVar(
+            envContent,
+            "CLOUDINARY_API_KEY",
+            "your-api-key"
+          );
+          envContent = replaceEnvVar(
+            envContent,
+            "CLOUDINARY_API_SECRET",
+            "your-api-secret"
+          );
+        }
+      }
+
       fs.writeFileSync(envTargetPath, envContent);
       console.log(chalk.green("Created .env file with your configurations"));
     }
@@ -569,6 +663,21 @@ services:
       - GEMINI_API_KEY=\${GEMINI_API_KEY}`;
   }
 
+  if (options.includeStorage) {
+    if (options.storageProvider === "aws") {
+      dockerComposeContent += `
+      - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=\${AWS_REGION}
+      - AWS_BUCKET_NAME=\${AWS_BUCKET_NAME}`;
+    } else if (options.storageProvider === "cloudinary") {
+      dockerComposeContent += `
+      - CLOUDINARY_CLOUD_NAME=\${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=\${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=\${CLOUDINARY_API_SECRET}`;
+    }
+  }
+
   dockerComposeContent += `
     env_file:
       - .env`;
@@ -688,6 +797,21 @@ services:
   if (options.includeGemini) {
     dockerComposeContent += `
       - GEMINI_API_KEY=\${GEMINI_API_KEY}`;
+  }
+
+  if (options.includeStorage) {
+    if (options.storageProvider === "aws") {
+      dockerComposeContent += `
+      - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=\${AWS_REGION}
+      - AWS_BUCKET_NAME=\${AWS_BUCKET_NAME}`;
+    } else if (options.storageProvider === "cloudinary") {
+      dockerComposeContent += `
+      - CLOUDINARY_CLOUD_NAME=\${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=\${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=\${CLOUDINARY_API_SECRET}`;
+    }
   }
 
   dockerComposeContent += `
