@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.1](https://github.com/miracleonyenma/untools-starter/compare/v0.5.0...v0.5.1) (2026-01-13)
+
+
+### Features
+
+* **utils:** add storage configuration to api project creation ([9ca7734](https://github.com/miracleonyenma/untools-starter/commit/9ca7734e933e53bbfca57943fa6e32c5c9085939))
+
 ## [0.5.0](https://github.com/miracleonyenma/untools-starter/compare/v0.4.4...v0.5.0) (2025-12-01)
 
 
