@@ -154,14 +154,14 @@ async function createApiProject(
         default: false,
       },
       {
-        type: "list",
+        type: "checkbox",
         name: "storageProvider",
         message: "Which storage provider would you like to use?",
         choices: [
           { name: "AWS S3", value: "aws" },
           { name: "Cloudinary", value: "cloudinary" },
         ],
-        default: "aws",
+        default: ["aws"],
         when: (answers) => answers.includeStorage,
       },
       {
@@ -378,7 +378,7 @@ async function createApiProject(
 
       // Storage
       if (projectOptions.includeStorage) {
-        if (projectOptions.storageProvider === "aws") {
+        if (projectOptions.storageProvider?.includes("aws")) {
           envContent = replaceEnvVar(
             envContent,
             "AWS_ACCESS_KEY_ID",
@@ -395,7 +395,9 @@ async function createApiProject(
             "AWS_BUCKET_NAME",
             "your-bucket-name"
           );
-        } else if (projectOptions.storageProvider === "cloudinary") {
+        }
+
+        if (projectOptions.storageProvider?.includes("cloudinary")) {
           envContent = replaceEnvVar(
             envContent,
             "CLOUDINARY_CLOUD_NAME",
@@ -416,7 +418,7 @@ async function createApiProject(
 
       // Storage
       if (projectOptions.includeStorage) {
-        if (projectOptions.storageProvider === "aws") {
+        if (projectOptions.storageProvider?.includes("aws")) {
           envContent = replaceEnvVar(
             envContent,
             "AWS_ACCESS_KEY_ID",
@@ -433,7 +435,9 @@ async function createApiProject(
             "AWS_BUCKET_NAME",
             "your-bucket-name"
           );
-        } else if (projectOptions.storageProvider === "cloudinary") {
+        }
+
+        if (projectOptions.storageProvider?.includes("cloudinary")) {
           envContent = replaceEnvVar(
             envContent,
             "CLOUDINARY_CLOUD_NAME",
@@ -664,13 +668,15 @@ services:
   }
 
   if (options.includeStorage) {
-    if (options.storageProvider === "aws") {
+    if (options.storageProvider?.includes("aws")) {
       dockerComposeContent += `
       - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=\${AWS_REGION}
       - AWS_BUCKET_NAME=\${AWS_BUCKET_NAME}`;
-    } else if (options.storageProvider === "cloudinary") {
+    }
+
+    if (options.storageProvider?.includes("cloudinary")) {
       dockerComposeContent += `
       - CLOUDINARY_CLOUD_NAME=\${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=\${CLOUDINARY_API_KEY}
@@ -800,13 +806,15 @@ services:
   }
 
   if (options.includeStorage) {
-    if (options.storageProvider === "aws") {
+    if (options.storageProvider?.includes("aws")) {
       dockerComposeContent += `
       - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=\${AWS_REGION}
       - AWS_BUCKET_NAME=\${AWS_BUCKET_NAME}`;
-    } else if (options.storageProvider === "cloudinary") {
+    }
+
+    if (options.storageProvider?.includes("cloudinary")) {
       dockerComposeContent += `
       - CLOUDINARY_CLOUD_NAME=\${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=\${CLOUDINARY_API_KEY}
