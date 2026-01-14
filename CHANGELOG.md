@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.5.4](https://github.com/miracleonyenma/untools-starter/compare/v0.5.3...v0.5.4) (2026-01-14)
+
+
+### Features
+
+* **utils:** add optional user creation for passwordless/OTP.. ([b5fd6c6](https://github.com/miracleonyenma/untools-starter/commit/b5fd6c6c2c243535b647fd05178c98d04547b545))
+
 ### [0.5.3](https://github.com/miracleonyenma/untools-starter/compare/v0.5.2...v0.5.3) (2026-01-14)
 
 
