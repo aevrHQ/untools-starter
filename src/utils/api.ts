@@ -1048,7 +1048,47 @@ ${options.appName}/
 - Roles are defined in \`prisma/schema.prisma\`.
 - Role setup is automated in \`src/services/role.services.ts\`.
 
-### 4. **Email Services**
+### 4. **Passwordless/OTP Login**
+
+- **Request OTP**:
+  - Mutation: \`requestOTP(email: String!)\`
+  - Logic: Checks if user exists, generates a 6-digit code, hashes it (SHA-256), saves it to the user record, and sends it via email. Includes rate limiting (60s).
+- **Verify OTP**:
+  - Mutation: \`verifyOTP(email: String!, otp: String!, shouldLogin: Boolean)\`
+  - Logic: Verifies the code hash, checks expiration (10 mins), and tracks attempts.
+  - If \`shouldLogin\` is true, returns authentication tokens (accessToken, refreshToken) upon success.
+  
+#### Example OTP Flow
+
+1. **Request Code**:
+   \`\`\`graphql
+   mutation {
+     requestOTP(email: "user@example.com") {
+       success
+       message
+     }
+   }
+   \`\`\`
+
+2. **Verify & Login**:
+   \`\`\`graphql
+   mutation {
+     verifyOTP(
+       email: "user@example.com"
+       otp: "123456"
+       shouldLogin: true
+     ) {
+       success
+       accessToken
+       user {
+         id
+         email
+       }
+     }
+   }
+   \`\`\`
+
+### 5. **Email Services**
 
 The email service module provides a flexible, provider-agnostic way to send emails with support for multiple email providers:
 
@@ -1156,11 +1196,11 @@ const emailBody = generateEmailTemplate(
 await mailSender("user@example.com", "Welcome", emailBody);
 \`\`\`
 
-### 5. **API Key Management**
+### 6. **API Key Management**
 
 - API keys are generated and validated in \`src/services/apiKey.services.ts\` and \`src/middlewares/apiKey.middleware.ts\`.
 
-### 6. **Password Reset**
+### 7. **Password Reset**
 
 - Password reset functionality is implemented in \`src/services/passwordResetToken.services.ts\`.
 
